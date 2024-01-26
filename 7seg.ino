@@ -1,8 +1,10 @@
 #include <stdint.h>
 
 /* 7 SEGMENT */
-const uint8_t digits_code[10] = {0xFC, 0x60, 0xDA, 0xF2, 0x66,
-                                 0xB6, 0xBE, 0xE0, 0xFE, 0xE6};
+const uint8_t digits_code[16] = {0xFC, 0x60, 0xDA, 0xF2,
+                                 0x66, 0xB6, 0xBE, 0xE0,
+                                 0xFE, 0xE6, 0xEE, 0x3E,
+                                 0x9C, 0x7A, 0x9E, 0x8E};
 
 // 7 segment display struct
 struct sseg {
@@ -50,14 +52,42 @@ void sseg_refresh(struct sseg *disp) {
 
         // select the digit
         digitalWrite(disp->digit_pins[i], LOW);
-        delay(4);
+        delay(1000/60/4); // 60Hz for each digit
         digitalWrite(disp->digit_pins[i], HIGH);
     }
 }
 
-// set the digits of the display
+// set a digit on the display
 void sseg_setdigit(struct sseg *disp, u8 index, u8 digit) {
+    // modify the digit
     disp->digit[index] = digits_code[digit];
+
+    // auto-refresh
+    if (disp->flags & SSEG_AUTOREFRESH) sseg_refresh(disp);
+}
+
+// print a decimal number on the display
+void sseg_printnumber(struct sseg *disp, uint16_t number) {
+    // modify the digits
+    disp->digit[0] = digits_code[(number/1000)%10];
+    disp->digit[1] = digits_code[(number/100)%10];
+    disp->digit[2] = digits_code[(number/10)%10];
+    disp->digit[3] = digits_code[number%10];
+
+    // auto-refresh
+    if (disp->flags & SSEG_AUTOREFRESH) sseg_refresh(disp);
+}
+
+// print a word (2 bytes in hex) on the display
+void sseg_print2bytes(struct sseg *disp, uint16_t bytes) {
+    // modify the digits
+    disp->digit[0] = digits_code[(bytes&0xF000)>>12];
+    disp->digit[1] = digits_code[(bytes&0x0F00)>>8];
+    disp->digit[2] = digits_code[(bytes&0x00F0)>>4];
+    disp->digit[3] = digits_code[(bytes&0x000F)];
+
+    // auto-refresh
+    if (disp->flags & SSEG_AUTOREFRESH) sseg_refresh(disp);
 }
 
 // get/set flags from the display
@@ -76,11 +106,4 @@ void setup() {
 
 /* LOOP */
 uint16_t i = 0;
-void loop() {
-    sseg_setdigit(display, 0, (i/1000)%10);
-    sseg_setdigit(display, 1, (i/100)%10);
-    sseg_setdigit(display, 2, (i/10)%10);
-    sseg_setdigit(display, 3, i%10);
-    sseg_refresh(display);
-    i++;
-}
+void loop() { sseg_print2bytes(display, i++); }
