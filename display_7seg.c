@@ -2,7 +2,6 @@
 #include <util/delay.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <math.h>
 #include "display_7seg.h"
 
 // initialize the display
@@ -78,11 +77,6 @@ void disp_7seg_printnumber(struct disp_7seg *disp, uint16_t number)
         disp->digit[disp->num_digits-i]=digits_code[(number/dig)%10];
         dig *= 10;
     }
-
-    // disp->digit[0] = digits_code[(number/1000)%10];
-    // disp->digit[1] = digits_code[(number/100)%10];
-    // disp->digit[2] = digits_code[(number/10)%10];
-    // disp->digit[3] = digits_code[number%10];
 
     // auto-refresh
     if (disp->flags & SSEG_AUTOREFRESH) disp_7seg_refresh(disp);

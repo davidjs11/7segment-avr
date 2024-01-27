@@ -1,3 +1,14 @@
-a (little) library for 4-digit 7-segment displays
+============ 7segment-avr ============
 
-right now it is a .ino sketch
+       ---    ---    ---    ---
+      |   |  |   |  |   |  |   |
+       ---    ---    ---    ---
+      |   |  |   |  |   |  |   |
+       ---    ---    ---    ---        
+
+
+a (little) library for using 7-segment
+displays in avr microcontrollers using
+avr libc.
+
+tested on atmega328p (arduino uno).
