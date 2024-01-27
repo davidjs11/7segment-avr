@@ -2,6 +2,7 @@
 #include <util/delay.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <math.h>
 #include "display_7seg.h"
 
 // initialize the display
@@ -69,11 +70,19 @@ void disp_7seg_setdigit(struct disp_7seg *disp,
 // print an unsigned number
 void disp_7seg_printnumber(struct disp_7seg *disp, uint16_t number)
 {
+
     // modify the digits
-    disp->digit[0] = digits_code[(number/1000)%10];
-    disp->digit[1] = digits_code[(number/100)%10];
-    disp->digit[2] = digits_code[(number/10)%10];
-    disp->digit[3] = digits_code[number%10];
+    // modify other digits
+    uint16_t dig = 1;
+    for(uint8_t i=1; i<=disp->num_digits; i++) {
+        disp->digit[disp->num_digits-i]=digits_code[(number/dig)%10];
+        dig *= 10;
+    }
+
+    // disp->digit[0] = digits_code[(number/1000)%10];
+    // disp->digit[1] = digits_code[(number/100)%10];
+    // disp->digit[2] = digits_code[(number/10)%10];
+    // disp->digit[3] = digits_code[number%10];
 
     // auto-refresh
     if (disp->flags & SSEG_AUTOREFRESH) disp_7seg_refresh(disp);
@@ -82,17 +91,24 @@ void disp_7seg_printnumber(struct disp_7seg *disp, uint16_t number)
 // print a signed number
 void disp_7seg_printsigned(struct disp_7seg *disp, int16_t number)
 {
+    uint16_t dig = 1; // digit (power of 10)
+
     // set sign digit if negative and first digit if not
     if (number < 0) {
-        disp->digit[0] = 0x02;
+        disp->digit[0] = 0x40;
         number *= -1;
     }
-    else disp->digit[0] = digits_code[(number/1000)%10];
+    else {
+        for(uint8_t i=0; i<disp->num_digits-1; i++) dig *= 10;
+        disp->digit[0] = digits_code[(number/dig)%10];
+    }
 
     // modify other digits
-    disp->digit[1] = digits_code[(number/100)%10];
-    disp->digit[2] = digits_code[(number/10)%10];
-    disp->digit[3] = digits_code[number%10];
+    dig = 1;
+    for(uint8_t i=1; i<=disp->num_digits-1; i++) {
+        disp->digit[disp->num_digits-i]=digits_code[(number/dig)%10];
+        dig *= 10;
+    }
 
     // auto-refresh
     if (disp->flags & SSEG_AUTOREFRESH) disp_7seg_refresh(disp);
@@ -102,10 +118,11 @@ void disp_7seg_printsigned(struct disp_7seg *disp, int16_t number)
 void disp_7seg_printhex(struct disp_7seg *disp, uint16_t bytes)
 {
     // modify the digits
-    disp->digit[0] = digits_code[(bytes&0xF000)>>12];
-    disp->digit[1] = digits_code[(bytes&0x0F00)>>8];
-    disp->digit[2] = digits_code[(bytes&0x00F0)>>4];
-    disp->digit[3] = digits_code[(bytes&0x000F)];
+    for(uint8_t i=1; i<=disp->num_digits; i++) {
+        uint8_t offset = 4*(i-1);
+        disp->digit[disp->num_digits-i] =
+            digits_code[(bytes&(0xF<<offset))>>offset];
+    }
 
     // auto-refresh
     if (disp->flags & SSEG_AUTOREFRESH) disp_7seg_refresh(disp);
@@ -123,15 +140,13 @@ void disp_7seg_setflags(struct disp_7seg *disp, uint8_t flags)
     disp->flags = flags;
 }
 
-volatile uint16_t i = 0;
-int main(void) {
+int main(void)
+{
     // initialize display
-    struct disp_7seg *disp;
-    disp = (struct disp_7seg *)malloc(sizeof(struct disp_7seg));
-    disp_7seg_init(disp, &PORTD, &PORTB, 3);
+    struct disp_7seg disp;
+    disp_7seg_init(&disp, &PORTD, &PORTB, 4);
 
-    while(1) {
-        i++;
-        disp_7seg_printhex(disp, i);
-    }
+    // display number
+    volatile uint16_t i = 0;
+    while(1) disp_7seg_printhex(&disp, i++);
 }
