@@ -1,22 +1,35 @@
+#include <avr/io.h>
+#include <util/delay.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include "display_7seg.h"
 
 // initialize the display
-void disp_7seg_init(struct disp_7seg *disp,
-                    uint8_t digit_pins[4], uint8_t segment_pins[8])
+void disp_7seg_init(struct disp_7seg *disp, volatile uint8_t *seg_port,
+                    volatile uint8_t *dig_port, uint8_t digits)
 {
+    // reserve memory for digits
+    disp->digit = (uint8_t *) malloc(digits);
+
     // set and init digit pins
-    for(uint8_t i=0; i<4; i++) {
-        disp->digit_pins[i] = digit_pins[i];
+    for(uint8_t i=0; i<digits; i++) {
+        // struct parameters
+        disp->num_digits = digits;
+        disp->digits_port = dig_port;
         disp->digit[i] = 0;
-        pinMode(digit_pins[i], OUTPUT); /////////////////////////////
-        digitalWrite(digit_pins[i], HIGH); //////////////////////////
+
+        // initialize digit pins (output - high)
+        *(disp->digits_port-1) |= (1 << i); // output
+        *(disp->digits_port) |= (1 << i);   // high
     }
 
     // set and init segment pins
     for(uint8_t i=0; i<8; i++) {
-        disp->segment_pins[i] = segment_pins[i];
-        pinMode(segment_pins[i], OUTPUT); ///////////////////////////
-        digitalWrite(segment_pins[i], LOW); /////////////////////////
+        disp->segments_port = seg_port;
+
+        // initialize segment pins (output - low)
+        *(disp->segments_port-1) |= (1 << i); // output
+        *(disp->segments_port) &= ~(1 << i);  // low
     }
 
     // set default flags
@@ -32,30 +45,29 @@ void disp_7seg_refresh(struct disp_7seg *disp)
     // iterate the digits 
     for(uint8_t i=0; i<4; i++) {
         // turn on/off the segments
-        for(uint8_t j=0; j<8; j++)
-            /////////////////////////////////////////////////////////
-            digitalWrite(disp->segment_pins[j], (disp->digit[i]<<j)&0x80);
+        *(disp->segments_port) = (disp->digit[i]);
 
         // select the digit
-        digitalWrite(disp->digit_pins[i], LOW); /////////////////////
-        delay(1000/60/4); // 60Hz for each digit ////////////////////
-        digitalWrite(disp->digit_pins[i], HIGH); ////////////////////
+        *(disp->digits_port) &= ~(1 << i);  // low
+        _delay_ms(1000/60/4);               // 60Hz for each digit
+        *(disp->digits_port) |= (1 << i);   // high
     }
 }
 
 // set a digit on the display
-void disp_7seg_setdigit(struct disp_7seg *disp, u8 index, u8 digit)
+void disp_7seg_setdigit(struct disp_7seg *disp,
+                        uint8_t index, uint8_t digit)
 {
     // modify the digit
     disp->digit[index] = digits_code[digit];
 
     // auto-refresh
-    if (disp->flags & SSEG_AUTOREFRESH) sseg_refresh(disp);
+    if (disp->flags & SSEG_AUTOREFRESH) disp_7seg_refresh(disp);
 }
 
 
 // print an unsigned number
-void disp_7seg_printnumber(struct disp_7seg *, uint16_t number)
+void disp_7seg_printnumber(struct disp_7seg *disp, uint16_t number)
 {
     // modify the digits
     disp->digit[0] = digits_code[(number/1000)%10];
@@ -64,11 +76,11 @@ void disp_7seg_printnumber(struct disp_7seg *, uint16_t number)
     disp->digit[3] = digits_code[number%10];
 
     // auto-refresh
-    if (disp->flags & SSEG_AUTOREFRESH) sseg_refresh(disp);
+    if (disp->flags & SSEG_AUTOREFRESH) disp_7seg_refresh(disp);
 }
 
 // print a signed number
-void disp_7seg_printsigned(struct disp_7seg *, int16_t number)
+void disp_7seg_printsigned(struct disp_7seg *disp, int16_t number)
 {
     // set sign digit if negative and first digit if not
     if (number < 0) {
@@ -83,11 +95,11 @@ void disp_7seg_printsigned(struct disp_7seg *, int16_t number)
     disp->digit[3] = digits_code[number%10];
 
     // auto-refresh
-    if (disp->flags & SSEG_AUTOREFRESH) sseg_refresh(disp);
+    if (disp->flags & SSEG_AUTOREFRESH) disp_7seg_refresh(disp);
 }
 
 // print 2 bytes
-void disp_7seg_print2bytes(struct disp_7seg *disp, uint16_t bytes)
+void disp_7seg_printhex(struct disp_7seg *disp, uint16_t bytes)
 {
     // modify the digits
     disp->digit[0] = digits_code[(bytes&0xF000)>>12];
@@ -96,7 +108,7 @@ void disp_7seg_print2bytes(struct disp_7seg *disp, uint16_t bytes)
     disp->digit[3] = digits_code[(bytes&0x000F)];
 
     // auto-refresh
-    if (disp->flags & SSEG_AUTOREFRESH) sseg_refresh(disp);
+    if (disp->flags & SSEG_AUTOREFRESH) disp_7seg_refresh(disp);
 }
 
 // get display flags
@@ -109,4 +121,17 @@ uint8_t disp_7seg_getflags(struct disp_7seg *disp)
 void disp_7seg_setflags(struct disp_7seg *disp, uint8_t flags)
 {
     disp->flags = flags;
+}
+
+volatile uint16_t i = 0;
+int main(void) {
+    // initialize display
+    struct disp_7seg *disp;
+    disp = (struct disp_7seg *)malloc(sizeof(struct disp_7seg));
+    disp_7seg_init(disp, &PORTD, &PORTB, 3);
+
+    while(1) {
+        i++;
+        disp_7seg_printhex(disp, i);
+    }
 }
