@@ -42,7 +42,7 @@ void sseg_init(struct sseg *disp, uint8_t digit_pins[4], uint8_t segment_pins[8]
 // refresh the display
 void sseg_refresh(struct sseg *disp) {
     // exit if display is not enabled
-    // if (!(disp->flags & SSEG_ENABLED)) return;
+    if (!(disp->flags & SSEG_ENABLED)) return;
 
     // iterate the digits 
     for(uint8_t i=0; i<4; i++) {
@@ -66,7 +66,7 @@ void sseg_setdigit(struct sseg *disp, u8 index, u8 digit) {
     if (disp->flags & SSEG_AUTOREFRESH) sseg_refresh(disp);
 }
 
-// print a decimal number on the display
+// print a (unsigned) decimal number on the display
 void sseg_printnumber(struct sseg *disp, uint16_t number) {
     // modify the digits
     disp->digit[0] = digits_code[(number/1000)%10];
@@ -77,6 +77,26 @@ void sseg_printnumber(struct sseg *disp, uint16_t number) {
     // auto-refresh
     if (disp->flags & SSEG_AUTOREFRESH) sseg_refresh(disp);
 }
+
+// print a signed decimal number on the display
+void sseg_printsigned(struct sseg *disp, int16_t number) {
+    // set sign digit if negative and first digit if not
+    if (number < 0) {
+        disp->digit[0] = 0x02;
+        number *= -1;
+    }
+    else disp->digit[0] = digits_code[(number/1000)%10];
+
+
+    // modify other digits
+    disp->digit[1] = digits_code[(number/100)%10];
+    disp->digit[2] = digits_code[(number/10)%10];
+    disp->digit[3] = digits_code[number%10];
+
+    // auto-refresh
+    if (disp->flags & SSEG_AUTOREFRESH) sseg_refresh(disp);
+}
+
 
 // print a word (2 bytes in hex) on the display
 void sseg_print2bytes(struct sseg *disp, uint16_t bytes) {
@@ -97,6 +117,7 @@ void sseg_setflags(struct sseg *disp, uint8_t flags) { disp->flags = flags; }
 
 /* SETUP */
 struct sseg *display = (struct sseg *) malloc(sizeof(struct sseg));
+int16_t i = 560;
 
 void setup() {
     uint8_t digit_pins[4] = {8,9,10,11};
@@ -105,5 +126,7 @@ void setup() {
 }
 
 /* LOOP */
-uint16_t i = 0;
-void loop() { sseg_print2bytes(display, i++); }
+int16_t inc = -1;
+void loop() {
+    sseg_printsigned(display, i--);
+}
