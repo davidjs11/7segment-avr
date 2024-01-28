@@ -36,6 +36,14 @@ void disp_7seg_init(struct disp_7seg *disp, volatile uint8_t *seg_port,
     disp->flags |= (SSEG_ENABLED | SSEG_AUTOREFRESH);
 }
 
+// free the memory
+void disp_7seg_free(struct disp_7seg *disp)
+{
+    free(disp->digit);
+}
+
+
+
 // refresh the display
 void disp_7seg_refresh(struct disp_7seg *disp)
 {
