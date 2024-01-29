@@ -1,3 +1,5 @@
+/// display_7seg.c //////////////////////////////////////////////////
+
 #include <avr/io.h>
 #include <util/delay.h>
 #include <stdint.h>
@@ -41,8 +43,6 @@ void disp_7seg_free(struct disp_7seg *disp)
 {
     free(disp->digit);
 }
-
-
 
 // refresh the display
 void disp_7seg_refresh(struct disp_7seg *disp)
@@ -142,6 +142,7 @@ void disp_7seg_setflags(struct disp_7seg *disp, uint8_t flags)
     disp->flags = flags;
 }
 
+// example (soon on example.c)
 int main(void)
 {
     // initialize display

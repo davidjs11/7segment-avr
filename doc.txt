@@ -1,0 +1,84 @@
+============ 7segment-avr ===========================================
+
+
+/* DISPLAY STRUCT ------------------------------------------------ */
+- struct disp_7seg { ... };
+
+used to represent a 7 segment display array. you can check the header
+file for more info on this struct.
+
+
+
+/* INITIALIZE/FREE ----------------------------------------------- */
+
+- void disp_7seg_init(struct disp_7seg *disp, volatile uint8_t *seg_port,
+                      volatile uint8_t *dig_port, uint8_t digits);
+
+initializes a disp_7seg struct, using:
+    'disp' as the display struct.
+    'seg_port' as segment port (all pins, being the first for A and
+    the last for the dot).
+    'dig_port' as digit port (first pin for first digit, and so on).
+    'digits' as number of digits in the display array.
+
+
+- void disp_7seg_free(struct disp_7seg *disp);
+
+frees the reserved memory on the struct.
+
+
+
+/* DISPLAY BASICS ------------------------------------------------ */
+
+- void disp_7seg_refresh(struct disp_7seg *disp);
+
+refreshes the display. needs to be executed most of the time when you
+want to use it.
+
+
+- void disp_7seg_setdigit(struct disp_7seg *disp, uint8_t index,
+                                                  uint8_t digit);
+
+sets the 'digit' value on the 'index' position on the 'disp' display
+
+
+
+/* FLAGS --------------------------------------------------------- */
+
+- current flags:
+
+SSEG_ENABLED        enables a display.
+SSEG_AUTOREFRESH    makes refreshing automatic on printing functions.
+
+
+- uint8_t disp_7seg_getflags(struct disp_7seg *disp);
+
+gets the flags from the display.
+
+
+- void disp_7seg_setflags(struct disp_7seg *disp, uint8_t flags);
+
+sets the flags on the display.
+
+
+
+/* PRINTING ------------------------------------------------------ */
+
+- void disp_7seg_printnumber(struct disp_7seg *, uint16_t number);
+
+prints an unsigned 'number' on the display.
+
+
+- void disp_7seg_printsigned(struct disp_7seg *, int16_t number);
+
+prints a signed 'number' on the display.
+
+
+- void disp_7seg_printhex(struct disp_7seg *, uint16_t bytes);
+
+prints an hexadecimal value on the display.
+
+
+- for each function:
+if the number of digits is higher than the number of displays, it
+will show the last digits.
