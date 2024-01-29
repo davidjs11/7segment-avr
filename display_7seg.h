@@ -3,28 +3,29 @@
 #ifndef DISPLAY_7SEG
 #define DISPLAY_7SEG
 
+#include <avr/io.h>
+#include <util/delay.h>
+#include <stdint.h>
+#include <stdlib.h>
+
 
 /* DIGITS (from 0-9 and A-F)*/
-const uint8_t digits_code[16] =
-    {0x3F, 0x06, 0x5B, 0x4F,
-     0x66, 0x6D, 0x7D, 0x07,
-     0x7F, 0x67, 0x77, 0x7C,
-     0x39, 0x5E, 0x79, 0x71};
+extern const uint8_t digits_code[16];
 
 
 /* DISPLAY STRUCT */
 struct disp_7seg {
-    uint8_t num_digits;
-    uint8_t *digit;
-    volatile uint8_t *digits_port;
-    volatile uint8_t *segments_port;
-    uint8_t flags;
+    uint8_t num_digits; /* number of digits on the display*/
+    uint8_t *digit; /* array of values shown of each digit */
+    volatile uint8_t *digits_port; /* avr port to the digit pins */
+    volatile uint8_t *segments_port; /* avr port to the segment pins */
+    uint8_t flags; /* flags for the screen */
 };
 
 
 /* FLAG MACROS */
-#define SSEG_ENABLED     0x80
-#define SSEG_AUTOREFRESH 0x40
+#define SSEG_ENABLED     0x80 /* enables the screen */
+#define SSEG_AUTOREFRESH 0x40 /* refresh automatically when printing */
 
 
 /* INITIALIZE/FREE STRUCT */

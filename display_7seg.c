@@ -1,10 +1,13 @@
 /// display_7seg.c //////////////////////////////////////////////////
 
-#include <avr/io.h>
-#include <util/delay.h>
-#include <stdint.h>
-#include <stdlib.h>
 #include "display_7seg.h"
+
+// digits (from 0-9 and a-f)
+const uint8_t digits_code[16] =
+    {0x3F, 0x06, 0x5B, 0x4F,
+     0x66, 0x6D, 0x7D, 0x07,
+     0x7F, 0x67, 0x77, 0x7C,
+     0x39, 0x5E, 0x79, 0x71};
 
 // initialize the display
 void disp_7seg_init(struct disp_7seg *disp, volatile uint8_t *seg_port,
@@ -140,16 +143,4 @@ uint8_t disp_7seg_getflags(struct disp_7seg *disp)
 void disp_7seg_setflags(struct disp_7seg *disp, uint8_t flags)
 {
     disp->flags = flags;
-}
-
-// example (soon on example.c)
-int main(void)
-{
-    // initialize display
-    struct disp_7seg disp;
-    disp_7seg_init(&disp, &PORTD, &PORTB, 4);
-
-    // display number
-    volatile uint16_t i = 0;
-    while(1) disp_7seg_printhex(&disp, i++);
 }
