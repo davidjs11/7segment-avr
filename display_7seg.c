@@ -80,9 +80,7 @@ void disp_7seg_setdigit(struct disp_7seg *disp,
 // print an unsigned number
 void disp_7seg_printnumber(struct disp_7seg *disp, uint16_t number)
 {
-
     // modify the digits
-    // modify other digits
     uint16_t dig = 1;
     for(uint8_t i=1; i<=disp->num_digits; i++) {
         disp->digit[disp->num_digits-i]=digits_code[(number/dig)%10];
